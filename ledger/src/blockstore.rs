@@ -1688,9 +1688,7 @@ impl Blockstore {
                     // progress. We cannot determine if we have the version that will eventually
                     // be complete, so we take the conservative approach and mark the slot as dead
                     // so that replay can dump and repair the correct version.
-                    self.dead_slots_cf
-                        .put_in_batch(write_batch, slot, &true)
-                        .unwrap();
+                    write_batch.put::<cf::DeadSlots>(slot, &true).unwrap();
                     return Err(InsertDataShredError::InvalidShred);
                 }
             }
@@ -7722,21 +7720,9 @@ pub mod tests {
                 ShredSource::Turbine,
             )
             .is_err());
-<<<<<<< HEAD
 
         // No insert, notify duplicate
         assert_eq!(duplicates.len(), 1);
-=======
-        let ShredInsertionTracker {
-            merkle_root_metas,
-            duplicate_shreds,
-            write_batch,
-            ..
-        } = shred_insertion_tracker;
-
-        // No insert, notify duplicate, and block is dead
-        assert_eq!(duplicate_shreds.len(), 1);
->>>>>>> 5564a941ae (blockstore: mark slot as dead on data shred merkle root conflict (#3970))
         assert_matches!(
             duplicates[0],
             PossibleDuplicateShred::MerkleRootConflict(_, _)
@@ -7797,8 +7783,7 @@ pub mod tests {
             fec_set_index + 30,
         );
 
-        let mut shred_insertion_tracker =
-            ShredInsertionTracker::new(data_shreds.len(), blockstore.db.batch().unwrap());
+        let mut write_batch = blockstore.db.batch().unwrap();
         blockstore
             .check_insert_data_shred(
                 new_data_shred.clone(),
@@ -7815,15 +7800,7 @@ pub mod tests {
                 ShredSource::Turbine,
             )
             .unwrap();
-<<<<<<< HEAD
-=======
-        let ShredInsertionTracker {
-            merkle_root_metas,
-            write_batch,
-            ..
-        } = shred_insertion_tracker;
         blockstore.db.write(write_batch).unwrap();
->>>>>>> 5564a941ae (blockstore: mark slot as dead on data shred merkle root conflict (#3970))
 
         // Verify that we still have the merkle root meta for the original shred
         // and the new shred
